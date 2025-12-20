@@ -6,6 +6,7 @@ const auth = firebase.auth();
 
 // Authentication state
 let currentUser = null;
+let authInitialized = false;
 
 // Initialize authentication on page load
 function initializeAuth() {
@@ -19,12 +20,18 @@ function initializeAuth() {
             console.log('User logged in:', user.email);
             showApp();
             updateUserInfo(user);
+            
+            // Load all data after authentication is confirmed
+            loadAllInitialData();
+            
         } else {
             // User is signed out
             currentUser = null;
             console.log('User logged out');
             showLoginForm();
         }
+        
+        authInitialized = true;
     });
     
     // Setup login form
@@ -34,15 +41,37 @@ function initializeAuth() {
     setupLogoutButton();
 }
 
+// Load all initial data after authentication
+function loadAllInitialData() {
+    console.log('Loading initial data...');
+    
+    // Load dashboard data
+    if (typeof loadDashboardData === 'function') {
+        loadDashboardData();
+    }
+    
+    // Pre-load families data (it will be cached)
+    if (typeof loadFamilies === 'function') {
+        loadFamilies();
+    }
+    
+    // Pre-load members data (it will be cached)
+    if (typeof loadMembers === 'function') {
+        loadMembers();
+    }
+    
+    // Pre-load requests data (it will be cached)
+    if (typeof loadRequests === 'function') {
+        loadRequests();
+    }
+    
+    console.log('Initial data loading complete');
+}
+
 // Show the main app
 function showApp() {
     document.getElementById('authContainer').classList.remove('active');
     document.querySelector('.app-container').classList.remove('auth-required');
-    
-    // Load initial data
-    if (typeof loadDashboardData === 'function') {
-        loadDashboardData();
-    }
 }
 
 // Show login form
@@ -139,6 +168,11 @@ function setupLogoutButton() {
                 clearAppData();
             }
             
+            // Reset app state
+            familiesData = [];
+            membersData = [];
+            requestsData = [];
+            
         } catch (error) {
             console.error('Logout error:', error);
             alert('Error logging out. Please try again.');
@@ -161,7 +195,9 @@ async function sendPasswordResetEmail(email) {
 window.authModule = {
     currentUser: () => currentUser,
     isAuthenticated: () => currentUser !== null,
-    sendPasswordReset: sendPasswordResetEmail
+    isInitialized: () => authInitialized,
+    sendPasswordReset: sendPasswordResetEmail,
+    reloadAllData: loadAllInitialData
 };
 
 // Initialize when DOM is ready

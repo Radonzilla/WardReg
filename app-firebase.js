@@ -22,8 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeModals();
     initializeForms();
     initializeEventListeners();
+    // Don't load data here - wait for authentication
+    // Data will be loaded by auth.js after user is authenticated
 });
-
 
 // Navigation
 function initializeNavigation() {
@@ -37,40 +38,37 @@ function initializeNavigation() {
 }
 
 function switchSection(section) {
+    // Update active nav button
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.section === section);
     });
 
+    // Update active section
     document.querySelectorAll('.content-section').forEach(sec => {
         sec.classList.toggle('active', sec.id === section);
     });
 
     currentSection = section;
 
-    // 🔐 HARD AUTH GATE
-    if (!authReady) {
-        console.warn("Auth not ready yet, skipping Firestore calls");
-        return;
-    }
-
+    // Load section data
     switch(section) {
         case 'dashboard':
             loadDashboardData();
             break;
         case 'families':
-            loadFamilies();
+            loadFamilies(currentZoneFilter); // Load families when navigating to this section
             break;
         case 'members':
-            loadMembers();
+            loadMembers(); // Load members when navigating to this section
             break;
         case 'queries':
+            // Queries are loaded on-demand via buttons
             break;
         case 'requests':
             loadRequests();
             break;
     }
 }
-
 
 // Dashboard Functions
 async function loadDashboardData() {
